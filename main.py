@@ -61,9 +61,16 @@ def edit_movie():
     movie_id = request.args.get("id")
     movie = db.get_or_404(Movie, movie_id)
     if form.validate_on_submit():
-        movie.rating = float(form.rating.data)
-        movie.review = form.review.data
-        db.session.commit()
+        try:
+            movie.rating = abs(float(form.rating.data))
+        except ValueError:
+            movie.rating = movie.rating
+        finally:
+            if form.review.data == "":
+                movie.review = movie.review
+            else:
+                movie.review = form.review.data
+            db.session.commit()
         return redirect(url_for('home'))
     return render_template('edit.html', movie=movie, form=form)
 
