@@ -61,6 +61,9 @@ class AddMovieForm(FlaskForm):
 def home():
     result = db.session.execute(db.select(Movie).order_by(Movie.ranking))
     all_movies = result.scalars().all()
+    for i in range(len(all_movies)):
+        all_movies[i].ranking = len(all_movies) - i
+
     return render_template("index.html", movies=all_movies)
 
 
@@ -113,14 +116,23 @@ def find_movie():
         movie_api_url = f"{MOVIE_DB_INFO_URL}/{movie_api_id}"
         response = requests.get(movie_api_url, params={"api_key": MOVIE_DB_API_KEY, "language": "en-US"})
         data = response.json()
+
+        result = db.session.execute(db.select(Movie).order_by(Movie.ranking))
+        all_movies = result.scalars().all()
+
         new_movie = Movie(
             title=data["title"],
             year=data["release_date"].split("-")[0],
+            rating=0,
+            ranking=len(all_movies),
+            review="",
             img_url=f"{MOVIE_DB_IMAGE_URL}{data['poster_path']}",
             description=data["overview"]
         )
+
         db.session.add(new_movie)
         db.session.commit()
+
         return redirect(url_for("edit_movie", id=new_movie.id))
 
 
